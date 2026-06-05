@@ -1,3 +1,30 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  * {
+    @apply border-glass-border;
+  }
+  body {
+    @apply text-white/90 antialiased;
+  }
+}
+
+@layer components {
+  .glass-panel {
+    @apply rounded-2xl border border-glass-border bg-glass-surface backdrop-blur-xl;
+  }
+  .glass-panel-hover {
+    @apply glass-panel transition-all duration-300 hover:bg-glass-hover hover:scale-[1.02] hover:shadow-lg hover:shadow-accent-cyan/10;
+  }
+  .gradient-text {
+    @apply bg-gradient-to-r from-accent-cyan to-accent-teal bg-clip-text text-transparent;
+  }
+  .gradient-text-purple {
+    @apply bg-gradient-to-r from-accent-purple to-accent-purple-light bg-clip-text text-transparent;
+  }
+  .glow-border {
+    @apply border border-accent-cyan/30 shadow-[0_0_15px_rgba(0,212,255,0.15)];
+  }
+}
