@@ -11,7 +11,8 @@ export const useDiskStore = defineStore('disk', () => {
     if (loaded.value || loading.value) return
     loading.value = true
     try {
-      const resp = await fetch('/viya_server_usage_simulated.json')
+      const base = import.meta.env.PROD ? import.meta.env.BASE_URL : '/'
+      const resp = await fetch(base + 'viya_server_usage_simulated.json')
       records.value = await resp.json()
       loaded.value = true
     } finally {
