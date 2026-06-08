@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import type { DiskRecord, HostSummary, DeviceInfo, TimeSeriesPoint } from '@/types'
 
 export const useDiskStore = defineStore('disk', () => {
@@ -33,28 +33,79 @@ export const useDiskStore = defineStore('disk', () => {
   })
 
   const latestSnapshot = computed<DiskRecord[]>(() => {
-    const ts = latestTimestamp.value
-    return records.value.filter((r) => r.collected_at === ts)
+    return hosts.value.flatMap((host) => {
+      const hostRecs = records.value.filter((r) => r.host_name === host)
+      if (!hostRecs.length) return []
+      const latestHour = hostLatestHour(hostRecs)
+      return hostRecs.filter((r) => sameHour(r.collected_at, latestHour))
+    })
   })
+
+  // --- Mountpoint selection (shared between bar chart & sparkline) ---
+  const mountpointOrder = ['/', '/share/spre', '/saswork', '/boot', '/boot/efi']
+
+  const allMountpoints = computed(() => {
+    const withMount = latestSnapshot.value.filter((r) => r.mountpoint && r.fsuse_pct !== null)
+    const mps = Array.from(new Set(withMount.map((r) => r.mountpoint!)))
+    return mps.sort((a, b) => {
+      const ia = mountpointOrder.indexOf(a)
+      const ib = mountpointOrder.indexOf(b)
+      if (ia === -1 && ib === -1) return a.localeCompare(b)
+      if (ia === -1) return 1
+      if (ib === -1) return -1
+      return ia - ib
+    })
+  })
+
+  const hiddenMountpoints = ref<Set<string>>(new Set())
+
+  watch(allMountpoints, (mps) => {
+    hiddenMountpoints.value = new Set(
+      mps.filter((mp) => mp === '/boot' || mp === '/boot/efi')
+    )
+  }, { immediate: true })
+
+  const selectedMountpoints = computed(() =>
+    allMountpoints.value.filter((mp) => !hiddenMountpoints.value.has(mp))
+  )
+
+  function toggleMountpoint(mp: string) {
+    const next = new Set(hiddenMountpoints.value)
+    if (next.has(mp)) next.delete(mp)
+    else next.add(mp)
+    hiddenMountpoints.value = next
+  }
 
   function hostRecords(hostName: string): DiskRecord[] {
     return records.value.filter((r) => r.host_name === hostName)
+  }
+
+  function hostLatestHour(hostRecs: DiskRecord[]): string {
+    return hostRecs.reduce((max, r) =>
+      r.collected_at > max ? r.collected_at : max, hostRecs[0].collected_at
+    ).slice(0, 13)
+  }
+
+  function sameHour(a: string, b: string): boolean {
+    return a.slice(0, 13) === b.slice(0, 13)
   }
 
   function hostSummary(hostName: string): HostSummary | null {
     const hostRecs = hostRecords(hostName)
     if (!hostRecs.length) return null
 
-    const latest = latestTimestamp.value
-    const current = hostRecs.filter((r) => r.collected_at === latest)
+    const latestHour = hostLatestHour(hostRecs)
+    const current = hostRecs.filter((r) => sameHour(r.collected_at, latestHour))
 
     let totalBytes = 0
     let usedBytes = 0
     const criticalMounts: HostSummary['criticalMounts'] = []
 
     for (const r of current) {
-      totalBytes += r.size_bytes
-      if (r.fsuse_pct !== null && r.mountpoint) {
+      if (r.parent_device === null) {
+        totalBytes += r.size_bytes
+      }
+      if (r.mountpoint && r.fsuse_pct !== null) {
         usedBytes += (r.size_bytes * r.fsuse_pct) / 100
         if (r.fsuse_pct >= 70) {
           criticalMounts.push({
@@ -80,10 +131,10 @@ export const useDiskStore = defineStore('disk', () => {
   }
 
   function hostDevices(hostName: string): DeviceInfo[] {
-    const latest = latestTimestamp.value
-    const current = records.value.filter(
-      (r) => r.host_name === hostName && r.collected_at === latest
-    )
+    const hostRecs = hostRecords(hostName)
+    if (!hostRecs.length) return []
+    const latestHour = hostLatestHour(hostRecs)
+    const current = hostRecs.filter((r) => sameHour(r.collected_at, latestHour))
 
     const byParent = new Map<string | null, DiskRecord[]>()
     for (const r of current) {
@@ -116,9 +167,11 @@ export const useDiskStore = defineStore('disk', () => {
   }
 
   function mountpointsForHost(hostName: string): string[] {
-    const latest = latestTimestamp.value
-    const mps = records.value
-      .filter((r) => r.host_name === hostName && r.collected_at === latest && r.mountpoint)
+    const hostRecs = hostRecords(hostName)
+    if (!hostRecs.length) return []
+    const latestHour = hostLatestHour(hostRecs)
+    const mps = hostRecs
+      .filter((r) => sameHour(r.collected_at, latestHour) && r.mountpoint)
       .map((r) => r.mountpoint!)
     return Array.from(new Set(mps)).sort()
   }
@@ -131,6 +184,10 @@ export const useDiskStore = defineStore('disk', () => {
     hosts,
     latestTimestamp,
     latestSnapshot,
+    allMountpoints,
+    hiddenMountpoints,
+    selectedMountpoints,
+    toggleMountpoint,
     hostRecords,
     hostSummary,
     hostDevices,

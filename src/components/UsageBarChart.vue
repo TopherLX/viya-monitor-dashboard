@@ -1,6 +1,22 @@
 <template>
   <div class="glass-panel p-6">
     <h3 class="text-sm font-semibold text-white/70 mb-4">Mountpoint Usage Comparison</h3>
+
+    <!-- Toggle Chips -->
+    <div class="flex flex-wrap gap-2 mb-4">
+      <button
+        v-for="mp in store.allMountpoints"
+        :key="mp"
+        @click="store.toggleMountpoint(mp)"
+        class="px-3 py-1 text-xs rounded-full border transition-all duration-200"
+        :class="store.selectedMountpoints.includes(mp)
+          ? 'border-accent-cyan/50 bg-accent-cyan/10 text-accent-cyan'
+          : 'border-white/10 bg-white/[0.02] text-white/30 hover:text-white/50 hover:border-white/20'"
+      >
+        {{ mp }}
+      </button>
+    </div>
+
     <VChart
       v-if="option"
       :option="option"
@@ -15,11 +31,11 @@ import { computed } from 'vue'
 import VChart from 'vue-echarts'
 import { use } from 'echarts/core'
 import { BarChart } from 'echarts/charts'
-import { GridComponent, TooltipComponent } from 'echarts/components'
+import { GridComponent, TooltipComponent, LegendComponent, MarkLineComponent } from 'echarts/components'
 import { CanvasRenderer } from 'echarts/renderers'
 import { useDiskStore } from '@/stores/diskStore'
 
-use([BarChart, GridComponent, TooltipComponent, CanvasRenderer])
+use([BarChart, GridComponent, TooltipComponent, LegendComponent, MarkLineComponent, CanvasRenderer])
 
 const store = useDiskStore()
 
@@ -27,12 +43,24 @@ const option = computed(() => {
   const snapshot = store.latestSnapshot
   const withMount = snapshot.filter((r) => r.mountpoint && r.fsuse_pct !== null)
   const hosts = store.hosts
-  const mountpoints = Array.from(new Set(withMount.map((r) => r.mountpoint!))).sort()
+  const mps = store.selectedMountpoints
+
+  const markLine = {
+    silent: true,
+    symbol: 'none',
+    z: 10,
+    animation: false,
+    label: { fontSize: 10, position: 'insideEndTop' as const },
+    lineStyle: { type: 'dashed' as const, width: 2 },
+    data: [
+      { yAxis: 70, lineStyle: { color: '#f59e0b' }, label: { formatter: '70% 告警', color: '#f59e0b' } },
+    ],
+  }
 
   const series = hosts.map((host) => ({
-    name: host,
+    name: host.charAt(0).toUpperCase() + host.slice(1),
     type: 'bar' as const,
-    data: mountpoints.map((mp) => {
+    data: mps.map((mp) => {
       const rec = withMount.find((r) => r.host_name === host && r.mountpoint === mp)
       return rec?.fsuse_pct ?? 0
     }),
@@ -44,10 +72,14 @@ const option = computed(() => {
           ? 'rgba(124,58,237,0.7)'
           : 'rgba(167,139,250,0.7)',
     },
+    markLine: host === 'master' ? markLine : undefined,
   }))
 
   return {
-    tooltip: { trigger: 'axis' as const },
+    tooltip: {
+      trigger: 'axis' as const,
+      valueFormatter: (val: number) => val + '%',
+    },
     legend: {
       textStyle: { color: 'rgba(255,255,255,0.6)' },
       top: 0,
@@ -61,7 +93,7 @@ const option = computed(() => {
     },
     xAxis: {
       type: 'category' as const,
-      data: mountpoints,
+      data: mps,
       axisLabel: { color: 'rgba(255,255,255,0.5)', fontSize: 11 },
       axisLine: { lineStyle: { color: 'rgba(255,255,255,0.1)' } },
     },

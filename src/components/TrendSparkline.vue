@@ -1,14 +1,25 @@
 <template>
-  <div class="glass-panel p-4 group cursor-pointer" @click="$emit('click')">
-    <div class="flex items-center justify-between mb-2">
+  <div class="glass-panel py-3 px-4 group cursor-pointer flex flex-col justify-center">
+    <div class="grid grid-cols-[1fr_auto_1fr] items-center mb-1 shrink-0">
       <span class="text-xs text-white/60 capitalize">{{ hostName }}</span>
-      <span class="text-xs font-mono" :class="trendColor">{{ latestPct }}%</span>
+      <div class="flex items-center gap-3">
+        <span
+          v-for="mp in store.selectedMountpoints"
+          :key="mp"
+          class="flex items-center gap-1 text-[10px] text-white/40"
+        >
+          <span class="inline-block w-1.5 h-1.5 rounded-full" :style="{ backgroundColor: mpColor(mp) }" />
+          {{ mp }}
+          <span class="text-white/25">{{ latestPct(mp) }}%</span>
+        </span>
+      </div>
+      <div />
     </div>
     <VChart
       v-if="option"
       :option="option"
       :autoresize="true"
-      class="h-16"
+      class="flex-1 min-h-0"
     />
   </div>
 </template>
@@ -25,58 +36,97 @@ import { useDiskStore } from '@/stores/diskStore'
 use([LineChart, GridComponent, CanvasRenderer])
 
 const props = defineProps<{ hostName: string }>()
-defineEmits<{ click: [] }>()
 
 const store = useDiskStore()
 
+const mpColors: Record<string, string> = {
+  '/': '#00d4ff',
+  '/share/spre': '#f59e0b',
+  '/saswork': '#7c3aed',
+  '/boot': '#10b981',
+  '/boot/efi': '#f43f5e',
+}
+const fallbackColors = ['#00d4ff', '#f59e0b', '#7c3aed', '#10b981', '#f43f5e', '#a78bfa']
+
+function mpColor(mp: string) {
+  return mpColors[mp] ?? fallbackColors[Math.abs(hash(mp)) % fallbackColors.length]
+}
+
+function hexToRgba(hex: string, alpha: number) {
+  const r = parseInt(hex.slice(1, 3), 16)
+  const g = parseInt(hex.slice(3, 5), 16)
+  const b = parseInt(hex.slice(5, 7), 16)
+  return `rgba(${r},${g},${b},${alpha})`
+}
+
+function hash(s: string): number {
+  let h = 0
+  for (let i = 0; i < s.length; i++) h = ((h << 5) - h + s.charCodeAt(i)) | 0
+  return h
+}
+
+const dailyAvgs = computed(() => {
+  const result = new Map<string, { day: string; avg: number }[]>()
+  for (const mp of store.selectedMountpoints) {
+    const recs = store.hostRecords(props.hostName)
+      .filter((r) => r.mountpoint === mp && r.fsuse_pct !== null)
+
+    const byDay = new Map<string, number[]>()
+    for (const r of recs) {
+      const day = r.collected_at.slice(0, 10)
+      if (!byDay.has(day)) byDay.set(day, [])
+      byDay.get(day)!.push(r.fsuse_pct!)
+    }
+
+    result.set(mp, Array.from(byDay.entries())
+      .map(([day, vals]) => ({
+        day,
+        avg: Math.round(vals.reduce((a, b) => a + b, 0) / vals.length),
+      }))
+      .sort((a, b) => a.day.localeCompare(b.day))
+    )
+  }
+  return result
+})
+
 const option = computed(() => {
-  const roots = store.hostRecords(props.hostName)
-    .filter((r) => r.mountpoint === '/' && r.fsuse_pct !== null)
-    .sort((a, b) => a.collected_at.localeCompare(b.collected_at))
+  if (!store.selectedMountpoints.length) return null
 
-  // Downsample to ~100 points for sparkline
-  const step = Math.max(1, Math.floor(roots.length / 100))
-  const sampled = roots.filter((_, i) => i % step === 0)
-
-  return {
-    grid: { left: 0, right: 0, top: 0, bottom: 0 },
-    xAxis: { type: 'category', show: false, data: sampled.map((r) => r.collected_at) },
-    yAxis: { type: 'value', show: false, min: 0, max: 100 },
-    series: [{
-      type: 'line',
-      data: sampled.map((r) => r.fsuse_pct),
+  const series = store.selectedMountpoints.map((mp) => {
+    const data = dailyAvgs.value.get(mp) ?? []
+    return {
+      name: mp,
+      type: 'line' as const,
+      data: data.map((d) => d.avg),
       smooth: true,
       showSymbol: false,
-      lineStyle: { width: 2, color: '#00d4ff' },
+      lineStyle: { width: 1.5, color: mpColor(mp) },
       areaStyle: {
         color: {
           type: 'linear',
           x: 0, y: 0, x2: 0, y2: 1,
           colorStops: [
-            { offset: 0, color: 'rgba(0,212,255,0.3)' },
-            { offset: 1, color: 'rgba(0,212,255,0.02)' },
+            { offset: 0, color: hexToRgba(mpColor(mp), 0.25) },
+            { offset: 1, color: 'rgba(0,0,0,0)' },
           ],
         },
       },
-    }],
+    }
+  })
+
+  const days = dailyAvgs.value.get(store.selectedMountpoints[0])?.map((d) => d.day) ?? []
+
+  return {
+    grid: { left: 10, right: 10, top: 0, bottom: 0 },
+    xAxis: { type: 'category', show: false, data: days, boundaryGap: false },
+    yAxis: { type: 'value', show: false, min: 0, max: 100 },
+    series,
   }
 })
 
-const latestPct = computed(() => {
-  const roots = store.hostRecords(props.hostName)
-    .filter((r) => r.mountpoint === '/' && r.fsuse_pct !== null)
-  if (!roots.length) return '--'
-  const latest = roots.reduce((a, b) =>
-    a.collected_at > b.collected_at ? a : b
-  )
-  return latest.fsuse_pct?.toString() ?? '--'
-})
-
-const trendColor = computed(() => {
-  const pct = parseInt(latestPct.value)
-  if (isNaN(pct)) return 'text-white/40'
-  if (pct >= 80) return 'text-alert-danger'
-  if (pct >= 60) return 'text-alert-warning'
-  return 'text-accent-teal'
-})
+function latestPct(mp: string) {
+  const data = dailyAvgs.value.get(mp)
+  if (!data?.length) return '--'
+  return data[data.length - 1].avg
+}
 </script>

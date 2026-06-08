@@ -19,16 +19,16 @@
       </div>
 
       <!-- Charts Row -->
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div class="lg:col-span-2">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="md:col-span-2">
           <UsageBarChart />
         </div>
-        <div class="flex flex-col gap-4">
+        <div class="flex flex-col gap-3 h-full">
           <TrendSparkline
             v-for="host in store.hosts"
             :key="host"
             :hostName="host"
-            @click="$router.push(`/server/${host}`)"
+            class="flex-1"
           />
         </div>
       </div>

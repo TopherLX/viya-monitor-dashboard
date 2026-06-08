@@ -13,13 +13,17 @@
     <!-- Content -->
     <div v-if="store.loaded" class="space-y-6">
       <!-- Capacity + Device Tree -->
-      <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
+      <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
         <CapacityPanel :hostName="hostName" />
         <DeviceHierarchy :devices="store.hostDevices(hostName)" />
+        <SankeyChart :devices="store.hostDevices(hostName)" />
       </div>
 
       <!-- Trend Chart -->
       <MountTrendChart :hostName="hostName" />
+
+
+
     </div>
 
     <div v-else class="flex items-center justify-center h-64">
@@ -34,6 +38,7 @@ import { useDiskStore } from '@/stores/diskStore'
 import CapacityPanel from '@/components/CapacityPanel.vue'
 import DeviceHierarchy from '@/components/DeviceHierarchy.vue'
 import MountTrendChart from '@/components/MountTrendChart.vue'
+import SankeyChart from '@/components/SankeyChart.vue'
 
 const props = defineProps<{ hostName: string }>()
 
@@ -43,4 +48,5 @@ const ip = computed(() => {
   const recs = store.hostRecords(props.hostName)
   return recs.length ? recs[0].host_ip : ''
 })
+
 </script>
