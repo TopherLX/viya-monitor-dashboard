@@ -12,7 +12,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
 INPUT = ROOT / "viya_server_usage_all.json"
-OUTPUT = ROOT / "public" / "viya_server_usage_simulated.json"
+OUTPUT = ROOT / "public" / "viya_server_usage.json"
 
 DAYS = 180
 HOURS_PER_DAY = 24

@@ -94,7 +94,7 @@ uv run python simulate_data.py   # 重新生成模拟数据
 `simulate_data.py` 基于 `viya_server_usage_all.json` 基准快照生成模拟数据：
 - 3 台服务器 × 23 设备 × 180 天 × 24 小时 = 99,360 条
 - fsuse_pct 含随机游走 + 日漂移 + 小时波动
-- 输出到 `public/viya_server_usage_simulated.json`
+- 输出到 `public/viya_server_usage.json`
 
 ## 部署
 
