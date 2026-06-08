@@ -27,9 +27,9 @@ interface SankeyNode { name: string; itemStyle: { color: string } }
 interface SankeyLink { source: string; target: string; value: number }
 
 const typeColors: Record<string, string> = {
-  disk: '#7c3aed',
-  part: '#00d4ff',
-  lvm: '#00ffc8',
+  disk: '#8b5cf6',
+  part: '#00dfff',
+  lvm: '#00ffd0',
 }
 
 function deviceName(device: DeviceInfo): string {

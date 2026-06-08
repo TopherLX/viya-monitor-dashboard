@@ -40,13 +40,13 @@ const props = defineProps<{ hostName: string }>()
 const store = useDiskStore()
 
 const mpColors: Record<string, string> = {
-  '/': '#00d4ff',
-  '/share/spre': '#f59e0b',
-  '/saswork': '#7c3aed',
-  '/boot': '#10b981',
-  '/boot/efi': '#f43f5e',
+  '/': '#00dfff',
+  '/share/spre': '#fbbf24',
+  '/saswork': '#8b5cf6',
+  '/boot': '#34d399',
+  '/boot/efi': '#f87171',
 }
-const fallbackColors = ['#00d4ff', '#f59e0b', '#7c3aed', '#10b981', '#f43f5e', '#a78bfa']
+const fallbackColors = ['#00dfff', '#fbbf24', '#8b5cf6', '#34d399', '#f87171', '#c4b5fd']
 
 function mpColor(mp: string) {
   return mpColors[mp] ?? fallbackColors[Math.abs(hash(mp)) % fallbackColors.length]

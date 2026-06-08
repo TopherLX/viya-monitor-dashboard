@@ -44,7 +44,7 @@ const ranges = [
   { label: '180d', days: 180 },
 ]
 
-const colors = ['#00d4ff', '#00ffc8', '#7c3aed', '#a78bfa', '#f59e0b', '#f43f5e']
+const colors = ['#00dfff', '#00ffd0', '#8b5cf6', '#c4b5fd', '#fbbf24', '#f87171']
 
 const option = computed(() => {
   const order = ['/', '/share/spre', '/saswork', '/boot', '/boot/efi']

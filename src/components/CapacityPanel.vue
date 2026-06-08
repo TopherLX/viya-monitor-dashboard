@@ -91,9 +91,9 @@ const filteredMounts = computed<MountInfo[]>(() => {
 })
 
 function gaugeColor(pct: number): string {
-  if (pct >= 80) return '#f43f5e'
-  if (pct >= 60) return '#f59e0b'
-  return '#00ffc8'
+  if (pct >= 80) return '#f87171'
+  if (pct >= 60) return '#fbbf24'
+  return '#00ffd0'
 }
 
 function textColor(pct: number): string {

@@ -53,7 +53,7 @@ const option = computed(() => {
     label: { fontSize: 10, position: 'insideEndTop' as const },
     lineStyle: { type: 'dashed' as const, width: 2 },
     data: [
-      { yAxis: 70, lineStyle: { color: '#f59e0b' }, label: { formatter: '70% 告警', color: '#f59e0b' } },
+      { yAxis: 70, lineStyle: { color: '#fbbf24' }, label: { formatter: '70% 告警', color: '#fbbf24' } },
     ],
   }
 

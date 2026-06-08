@@ -24,16 +24,16 @@ echarts.use([
 ])
 
 export const chartTheme = {
-  color: ['#00d4ff', '#7c3aed', '#00ffc8', '#a78bfa', '#f59e0b', '#f43f5e'],
+  color: ['#00dfff', '#8b5cf6', '#00ffd0', '#c4b5fd', '#fbbf24', '#f87171'],
   backgroundColor: 'transparent',
-  textStyle: { color: 'rgba(255,255,255,0.7)' },
+  textStyle: { color: 'rgba(255,255,255,0.75)' },
   title: { textStyle: { color: '#ffffff' } },
   legend: {
-    textStyle: { color: 'rgba(255,255,255,0.7)' },
+    textStyle: { color: 'rgba(255,255,255,0.75)' },
   },
   tooltip: {
-    backgroundColor: 'rgba(10,10,46,0.9)',
-    borderColor: 'rgba(255,255,255,0.15)',
+    backgroundColor: 'rgba(27,28,62,0.95)',
+    borderColor: 'rgba(255,255,255,0.18)',
     textStyle: { color: '#ffffff' },
   },
   grid: {
@@ -54,7 +54,7 @@ export const chartTheme = {
   gauge: {
     axisLine: {
       lineStyle: {
-        color: [[0.3, '#00ffc8'], [0.7, '#f59e0b'], [1, '#f43f5e']],
+        color: [[0.3, '#00ffd0'], [0.7, '#fbbf24'], [1, '#f87171']],
       },
     },
     axisTick: { lineStyle: { color: 'rgba(255,255,255,0.3)' } },

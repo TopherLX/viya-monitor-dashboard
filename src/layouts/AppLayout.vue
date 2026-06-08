@@ -1,25 +1,25 @@
 <template>
   <div class="flex min-h-screen">
     <!-- Sidebar -->
-    <aside class="w-64 flex-shrink-0 border-r border-glass-border bg-glass-surface/30 backdrop-blur-xl">
+    <aside class="w-64 flex-shrink-0 border-r border-glass-border bg-glass-surface backdrop-blur-xl">
       <div class="flex flex-col h-full p-6">
         <!-- Logo -->
         <router-link to="/" class="block mb-8">
           <h1 class="text-xl font-bold gradient-text">Viya Monitor</h1>
-          <p class="text-xs text-white/40 mt-1">SAS Viya Disk Dashboard</p>
+          <p class="text-xs text-white/50 mt-1">SAS Viya Disk Dashboard</p>
         </router-link>
 
         <!-- Nav Links -->
         <nav class="flex flex-col gap-1 flex-1">
           <router-link
             to="/"
-            class="px-3 py-2 rounded-lg text-sm text-white/60 hover:text-white hover:bg-glass-hover transition-colors"
+            class="px-3 py-2 rounded-lg text-sm text-white/70 hover:text-white hover:bg-glass-hover transition-colors"
             :class="{ 'bg-glass-surface text-white': $route.path === '/' }"
           >
             Overview
           </router-link>
 
-          <div class="mt-4 mb-1 text-xs text-white/30 uppercase tracking-wider px-3">
+          <div class="mt-4 mb-1 text-xs text-white/40 uppercase tracking-wider px-3">
             Servers
           </div>
 
@@ -27,7 +27,7 @@
             v-for="host in hosts"
             :key="host"
             :to="`/server/${host}`"
-            class="px-3 py-2 rounded-lg text-sm text-white/60 hover:text-white hover:bg-glass-hover transition-colors capitalize"
+            class="px-3 py-2 rounded-lg text-sm text-white/70 hover:text-white hover:bg-glass-hover transition-colors capitalize"
             :class="{ 'bg-glass-surface text-white': $route.params.hostName === host }"
           >
             {{ host }}
@@ -35,7 +35,7 @@
         </nav>
 
         <!-- Footer -->
-        <div class="text-xs text-white/20 pt-4 border-t border-glass-border">
+        <div class="text-xs text-white/35 pt-4 border-t border-glass-border">
           Last update: {{ lastUpdate }}
         </div>
       </div>
