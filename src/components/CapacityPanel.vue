@@ -35,9 +35,9 @@
               fill="none"
               :stroke="gaugeColor(m.fsusePct)"
               stroke-width="3"
-              :stroke-dasharray="`${m.fsusePct * 0.973} 100`"
+              :stroke-dasharray="`${(animatedPct[m.mountpoint] ?? 0) * 0.973} 100`"
               stroke-linecap="round"
-              class="transition-all duration-700"
+              class="transition-all duration-700 ease-out"
             />
           </svg>
           <span class="text-lg font-bold font-mono" :class="textColor(m.fsusePct)">
@@ -52,12 +52,25 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref, onMounted, watch } from 'vue'
 import { useDiskStore } from '@/stores/diskStore'
 
 const props = defineProps<{ hostName: string }>()
 
 const store = useDiskStore()
+const animatedPct = ref<Record<string, number>>({})
+
+function animate() {
+  animatedPct.value = {}
+  requestAnimationFrame(() => {
+    const next: Record<string, number> = {}
+    filteredMounts.value.forEach((m) => { next[m.mountpoint] = m.fsusePct })
+    animatedPct.value = next
+  })
+}
+
+onMounted(animate)
+watch(() => props.hostName, animate)
 
 interface MountInfo {
   mountpoint: string
