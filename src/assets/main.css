@@ -11,16 +11,125 @@
   }
 }
 
+/* ── iOS 26–style animated wallpaper ── */
+@layer base {
+  .dynamic-bg {
+    background: linear-gradient(145deg, #1b1c3e 0%, #222d50 45%, #1e2848 100%);
+  }
+
+  #app {
+    position: relative;
+    z-index: 1;
+  }
+
+  #app::before,
+  #app::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    will-change: transform;
+  }
+
+  /* Warm purple blob */
+  #app::before {
+    background: radial-gradient(
+      ellipse 55% 50% at 25% 35%,
+      rgba(140, 100, 220, 0.18) 0%,
+      transparent 65%
+    );
+    animation: drift-warm 5s ease-in-out infinite;
+  }
+
+  /* Cool cyan blob */
+  #app::after {
+    background: radial-gradient(
+      ellipse 50% 55% at 75% 55%,
+      rgba(60, 170, 230, 0.14) 0%,
+      transparent 65%
+    );
+    animation: drift-cool 5s ease-in-out infinite;
+  }
+
+  @keyframes drift-warm {
+    0%   { transform: translate(0, 0) scale(1); }
+    25%  { transform: translate(4%, -3%) scale(1.10); }
+    50%  { transform: translate(-2%, 4%) scale(0.92); }
+    75%  { transform: translate(-3%, -2%) scale(1.06); }
+    100% { transform: translate(0, 0) scale(1); }
+  }
+
+  @keyframes drift-cool {
+    0%   { transform: translate(0, 0) scale(1); }
+    33%  { transform: translate(-3%, 4%) scale(1.08); }
+    66%  { transform: translate(3%, -2%) scale(0.93); }
+    100% { transform: translate(0, 0) scale(1); }
+  }
+}
+
 @layer components {
   .glass-panel {
-    @apply rounded-2xl border border-glass-border bg-glass-surface backdrop-blur-xl;
+    @apply rounded-2xl bg-glass-surface backdrop-blur-3xl;
+    position: relative;
+    isolation: isolate;
+    border: 1px solid rgba(255,255,255,0.12);
     box-shadow:
-      inset 0 1px 0 rgba(255,255,255,0.06),
-      0 4px 24px rgba(0,0,0,0.15);
+      0 8px 40px rgba(0,0,0,0.12),
+      inset 0 1px 0 rgba(255,255,255,0.08);
   }
+
+  /* Top light refraction — simulates light catching the glass edge */
+  .glass-panel::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: radial-gradient(
+      ellipse 80% 60% at 50% 0%,
+      rgba(255,255,255,0.06) 0%,
+      transparent 60%
+    );
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  /* Subtle corner iridescence */
+  .glass-panel::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background:
+      linear-gradient(
+        135deg,
+        rgba(255,255,255,0.04) 0%,
+        transparent 25%,
+        transparent 75%,
+        rgba(220,230,255,0.03) 100%
+      );
+    pointer-events: none;
+    z-index: 2;
+  }
+
+  /* Content must explicitly stack above glass layers */
+  .glass-panel > * {
+    position: relative;
+    z-index: 3;
+  }
+
   .glass-panel-hover {
-    @apply glass-panel transition-all duration-300 hover:bg-glass-hover hover:scale-[1.01] hover:shadow-xl hover:shadow-accent-cyan/5;
+    @apply glass-panel transition-all duration-500;
   }
+  .glass-panel-hover:hover {
+    background-color: rgba(255,255,255,0.10);
+    border-color: rgba(255,255,255,0.18);
+    box-shadow:
+      0 12px 48px rgba(0,0,0,0.15),
+      inset 0 1px 0 rgba(255,255,255,0.12);
+    transform: scale(1.005);
+  }
+
   .gradient-text {
     @apply bg-gradient-to-r from-accent-cyan to-accent-teal bg-clip-text text-transparent;
   }
