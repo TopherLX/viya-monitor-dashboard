@@ -13,7 +13,12 @@ export const useDiskStore = defineStore('disk', () => {
     try {
       const base = import.meta.env.PROD ? import.meta.env.BASE_URL : '/'
       const resp = await fetch(base + 'viya_server_usage.json')
-      records.value = await resp.json()
+      const raw = await resp.json()
+      records.value = raw.map((r: DiskRecord) => ({
+        ...r,
+        size_bytes: Number(r.size_bytes),
+        fsuse_pct: r.fsuse_pct != null ? Number(r.fsuse_pct) : null,
+      }))
       loaded.value = true
     } finally {
       loading.value = false
@@ -145,6 +150,7 @@ export const useDiskStore = defineStore('disk', () => {
 
     function buildTree(parent: string | null): DeviceInfo[] {
       const children = byParent.get(parent) || []
+      children.sort((a, b) => a.device_name.localeCompare(b.device_name, undefined, { numeric: true }))
       return children.map((r) => ({
         deviceName: r.device_name,
         parentDevice: r.parent_device,
